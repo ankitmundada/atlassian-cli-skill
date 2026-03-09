@@ -19,33 +19,18 @@ Understanding the hierarchy is essential. Get this wrong and everything downstre
 
 ```
 Initiative (optional, via Jira Plans)
-  └── Epic          — a feature or body of work, spans multiple sprints
-        └── Story   — a user-facing outcome, completable in one sprint
-        └── Task    — internal work (refactors, infra, tooling)
-        └── Bug     — something broken that needs fixing
-              └── Sub-task (optional) — a checklist item within a story/task/bug
+  └── Epic       — a feature, not a category. Has a definition of done.
+        ├── Story    — user-facing outcome. Must fit in one sprint.
+        ├── Task     — internal work (infra, refactors). Still needs estimation.
+        └── Bug      — broken behavior, not a missing feature.
+              └── Sub-task (optional) — use sparingly. 8 sub-tasks = 2 stories.
 ```
 
-### Opinionated Rules
-
-**Epics are features, not categories.** "Authentication System" is a good epic. "Backend Work" is not — that's a component or label. An epic should have a clear definition of done: when all its stories are shipped, the feature is complete.
-
-**Stories describe outcomes, not implementation.** "As a user, I can reset my password via email" is a story. "Add POST /reset-password endpoint" is a task or sub-task. If your stories read like technical specs, they're too granular.
-
-**Tasks are for work that doesn't face the user.** CI/CD pipeline improvements, database migrations, dependency upgrades, tech debt payoff. These still belong in sprints and still need estimation.
-
-**Bugs are for broken behavior, not missing features.** "Login button returns 500" is a bug. "We need a login button" is a story. Mislabeling creates noisy reports.
-
-**Sub-tasks are optional and often overused.** If a story needs 8 sub-tasks, it's probably two stories. Use sub-tasks sparingly — for genuine checklists where each step needs independent tracking, not as a substitute for breaking stories down properly.
+**Key judgment calls:** "Authentication System" is a good epic; "Backend Work" is not (use a component or label). "User can reset password" is a story; "Add POST /reset-password" is a task. "Login returns 500" is a bug; "We need login" is a story.
 
 ### Sprints
 
-A sprint is a fixed time-box (typically 1–2 weeks) where the team commits to completing a set of issues. Key principles:
-
-- **A sprint has a goal**, not just a pile of tickets. The goal is a sentence: "Users can complete the checkout flow end-to-end."
-- **Stories should fit within one sprint.** If a story can't be finished in a single sprint, it's too big — split it.
-- **Don't stuff sprints.** Unfinished work carries over and demoralizes. Aim for 80% capacity to leave room for surprises.
-- **The backlog is the queue, not the sprint.** The backlog holds everything that's been groomed and prioritized. The sprint holds only what's committed for this time-box.
+A sprint is a 1–2 week time-box. Stories should fit within one sprint — if they can't, split them. Don't stuff sprints past ~80% capacity. The sprint has a **goal** (a sentence, not a pile of tickets). The backlog is the prioritized queue that feeds sprints; the sprint holds only what's committed.
 
 ### How It All Connects
 
@@ -63,7 +48,7 @@ Backlog (prioritized queue)
         └── Task: "Upgrade Node.js to v22"               ← Backlog (not yet planned)
 ```
 
-The backlog feeds sprints. Epics give structure across sprints. Stories/tasks/bugs are the actual work units.
+The backlog feeds sprints. Epics give structure across sprints. Stories/tasks/bugs are the work units.
 
 ---
 
@@ -113,6 +98,16 @@ project = "PROJ" AND status changed to Done AFTER startOfWeek()
 ## Decision Patterns
 
 These are the thinking patterns for common tasks — which operations to chain and in what order. The MCP connection already tells you what tools exist; this section tells you *when and why* to use them.
+
+### Querying: Zoom In, Don't Dump
+
+**Start broad and shallow, then drill into detail.** When a user asks "where are we on the project?", don't pull every issue in the project — that's a context-killing firehose. Instead:
+
+1. **Start at epic level:** `project = "PROJ" AND type = Epic` with `maxResults: 10`. This gives you the feature-level picture in a handful of results.
+2. **Summarize from that.** Report epics and their statuses. This often answers the question.
+3. **Drill in only if asked:** If the user wants detail on a specific epic, then query its children: `"Epic Link" = PROJ-100 AND status != Done`.
+
+This "zoom in progressively" pattern applies broadly. For sprint status, query the sprint's issues grouped by status. For workload questions, query by assignee. Always start with the smallest query that answers the question and expand only when needed.
 
 ### Creating Issues
 
@@ -260,6 +255,21 @@ Every Jira instance has constants that never change (or change very rarely). Dis
 **Link issues to Confluence pages.** When a story originates from a spec, put the Confluence link in the description. When a sprint ends, write the retro in Confluence and link it. The connection between "what" and "why" is where teams lose context — don't let that happen.
 
 **Inspect before you write.** When you're unsure how a field should be formatted, fetch an existing issue that has it set correctly and mirror the structure. This is the fastest way to learn any instance's quirks.
+
+---
+
+## Known MCP Limitations
+
+These operations are **not available** through the Jira MCP API. Don't waste tool calls trying to discover them — tell the user to do these in the Jira UI directly:
+
+- **Sprint lifecycle:** Creating, starting, closing, or deleting sprints. You can query sprint data and assign issues to sprints, but sprint management itself requires the Jira board UI.
+- **Board configuration:** Creating or modifying boards, columns, swimlanes, or quick filters.
+- **Deleting issues:** The MCP API exposes create, read, and update — but not delete.
+- **Managing workflows:** Creating or editing workflow schemes, statuses, or transitions. You can use existing transitions but not define new ones.
+- **User/group administration:** Creating users, managing groups, or changing permissions.
+- **Attachments:** Uploading or downloading file attachments on issues.
+
+When you hit one of these, be direct with the user: "This requires the Jira UI — I can't do it via the API."
 
 ---
 
