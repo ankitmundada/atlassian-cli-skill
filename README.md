@@ -1,4 +1,4 @@
-# useful-skills
+# atlassian-cli-skill
 
 Skills and tools for AI coding agents (Claude Code, Cursor, etc.) to work with Atlassian products.
 
@@ -35,7 +35,7 @@ atlassian-cli auth login
 ### Install the skill (Claude Code)
 
 ```bash
-claude skill add --from github:ankitmundada/useful-skills/atlassian-cli-skill
+claude skill add --from github:ankitmundada/atlassian-cli-skill
 ```
 
 ## License

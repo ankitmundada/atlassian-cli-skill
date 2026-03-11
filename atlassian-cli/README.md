@@ -116,8 +116,8 @@ atlassian-cli auth status
 ## Development
 
 ```bash
-git clone https://github.com/ankitmundada/useful-skills.git
-cd useful-skills/atlassian-cli
+git clone https://github.com/ankitmundada/atlassian-cli-skill.git
+cd atlassian-cli-skill/atlassian-cli
 pip install -e ".[dev]"
 pytest tests/ -v
 ```

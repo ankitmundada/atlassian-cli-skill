@@ -38,9 +38,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ankitmundada/useful-skills/tree/main/atlassian-cli"
-Repository = "https://github.com/ankitmundada/useful-skills"
-Issues = "https://github.com/ankitmundada/useful-skills/issues"
+Homepage = "https://github.com/ankitmundada/atlassian-cli-skill/tree/main/atlassian-cli"
+Repository = "https://github.com/ankitmundada/atlassian-cli-skill"
+Issues = "https://github.com/ankitmundada/atlassian-cli-skill/issues"
 
 [project.scripts]
 atlassian-cli = "atlassian_cli.app:main"
