@@ -14,9 +14,9 @@ fi
 
 # ── Skill ────────────────────────────────────────────────────────────────
 
-for dir in "$HOME/.claude/skills/atlassian-cli" "$HOME/.claude/skills/atlassian-cli-skill"; do
+for dir in "$HOME/.claude/skills/atlassian-cli-skill" "$HOME/.claude/skills/atlassian-cli" "$HOME/.claude/skills/smart-commits"; do
   if [ -d "$dir" ]; then
-    echo "Removing Claude Code skill from ${dir}..."
+    echo "Removing skill from ${dir}..."
     rm -rf "$dir"
   fi
 done

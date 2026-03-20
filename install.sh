@@ -3,16 +3,7 @@ set -euo pipefail
 
 REPO="ankitmundada/atlassian-cli-skill"
 BRANCH="main"
-SKILL_DIR="atlassian-cli-skill"
-RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${SKILL_DIR}"
-
-SKILL_FILES=(
-  "SKILL.md"
-  "adf-reference.md"
-  "references/advanced-jql-reference.md"
-)
-
-TARGET="$HOME/.claude/skills/atlassian-cli"
+RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
 
 # ── CLI ──────────────────────────────────────────────────────────────────
 
@@ -38,23 +29,37 @@ install_cli() {
   pipx upgrade cli-atlassian 2>/dev/null || pipx install cli-atlassian
 }
 
-# ── Skill ────────────────────────────────────────────────────────────────
+# ── Skills ───────────────────────────────────────────────────────────────
 
 install_skill() {
-  # Clean up old install path
-  rm -rf "$HOME/.claude/skills/atlassian-cli-skill"
+  local name="$1"
+  shift
+  local target="$HOME/.claude/skills/${name}"
 
-  echo "Installing Claude Code skill to ${TARGET}..."
-  mkdir -p "${TARGET}/references"
-  for file in "${SKILL_FILES[@]}"; do
-    curl -fsSL "${RAW}/${file}" -o "${TARGET}/${file}"
+  echo "Installing skill: ${name}..."
+  mkdir -p "$target"
+  for file in "$@"; do
+    mkdir -p "$target/$(dirname "$file")"
+    curl -fsSL "${RAW}/${name}/${file}" -o "${target}/${file}"
   done
+}
+
+install_skills() {
+  # Clean up old install paths
+  rm -rf "$HOME/.claude/skills/atlassian-cli-skill"
+  rm -rf "$HOME/.claude/skills/atlassian-cli"
+
+  install_skill "atlassian-cli-skill" \
+    "SKILL.md" "adf-reference.md" "references/advanced-jql-reference.md"
+
+  install_skill "smart-commits" \
+    "SKILL.md"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────
 
 echo "==> atlassian-cli installer"
 install_cli
-install_skill
+install_skills
 echo ""
 echo "Done. Verify with:  atlassian-cli --help"
