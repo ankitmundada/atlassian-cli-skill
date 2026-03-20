@@ -14,14 +14,12 @@ fi
 
 # ── Skill ────────────────────────────────────────────────────────────────
 
-TARGET="$HOME/.claude/skills/atlassian-cli"
-
-if [ -d "$TARGET" ]; then
-  echo "Removing Claude Code skill from ${TARGET}..."
-  rm -rf "$TARGET"
-else
-  echo "Skill not found, skipping."
-fi
+for dir in "$HOME/.claude/skills/atlassian-cli" "$HOME/.claude/skills/atlassian-cli-skill"; do
+  if [ -d "$dir" ]; then
+    echo "Removing Claude Code skill from ${dir}..."
+    rm -rf "$dir"
+  fi
+done
 
 echo ""
 echo "Done."

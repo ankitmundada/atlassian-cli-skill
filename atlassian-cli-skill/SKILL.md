@@ -372,7 +372,7 @@ atlassian-cli jira issue comment add PROJ-123 --body "Reassigned to new-owner fo
 # Gather shipped items
 atlassian-cli jira issue search --jql "project = PROJ AND fixVersion = 'v2.5' AND status = Done" --output json > shipped.json
 
-# Create a blog post in wiki format (default)
+# Create a blog post (body-file content is markdown by default)
 atlassian-cli confluence blog create --space <SPACE-ID> --title "Release Notes — v2.5" --body-file release-notes.md
 ```
 

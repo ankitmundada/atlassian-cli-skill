@@ -41,6 +41,9 @@ install_cli() {
 # ── Skill ────────────────────────────────────────────────────────────────
 
 install_skill() {
+  # Clean up old install path
+  rm -rf "$HOME/.claude/skills/atlassian-cli-skill"
+
   echo "Installing Claude Code skill to ${TARGET}..."
   mkdir -p "${TARGET}/references"
   for file in "${SKILL_FILES[@]}"; do
