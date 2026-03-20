@@ -5,12 +5,12 @@ Open-source Python CLI for Jira and Confluence Cloud. Built for humans and AI ag
 ## Install
 
 ```bash
-# Homebrew (macOS/Linux)
-brew install ankitmundada/tap/atlassian-cli
+# One-liner (CLI + Claude Code skill)
+curl -fsSL https://raw.githubusercontent.com/ankitmundada/atlassian-cli-skill/main/install.sh | bash
 
-# pip / pipx
+# Or just the CLI — pick one
+brew install ankitmundada/tap/atlassian-cli
 pip install cli-atlassian
-# or
 pipx install cli-atlassian
 ```
 
@@ -53,7 +53,7 @@ atlassian-cli jira sprint update 100 --state active
 # Confluence
 atlassian-cli confluence space list
 atlassian-cli confluence page search --cql "space = 'ENG' AND title ~ 'design'"
-atlassian-cli confluence page create --space 12345 --title "Meeting Notes" --body "<p>Notes here</p>"
+atlassian-cli confluence page create --space 12345 --title "Meeting Notes" --body "# Meeting Notes\n\nNotes here."
 ```
 
 ## Commands

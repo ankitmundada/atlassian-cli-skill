@@ -13,16 +13,18 @@ The CLI tool and the skill are designed to work together. The skill provides the
 
 ## Quick start
 
-### Install the CLI
+### One-liner (CLI + Claude Code skill)
 
 ```bash
-# Homebrew (macOS/Linux)
+curl -fsSL https://raw.githubusercontent.com/ankitmundada/atlassian-cli-skill/main/install.sh | bash
+```
+
+### Or install separately
+
+```bash
+# CLI — pick one
 brew install ankitmundada/tap/atlassian-cli
-
-# or pip
 pip install cli-atlassian
-
-# or pipx
 pipx install cli-atlassian
 ```
 
@@ -30,12 +32,6 @@ Then authenticate:
 
 ```bash
 atlassian-cli auth login
-```
-
-### Install the skill (Claude Code)
-
-```bash
-claude skill add --from github:ankitmundada/atlassian-cli-skill
 ```
 
 ## License
