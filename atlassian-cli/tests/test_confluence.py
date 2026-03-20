@@ -1,4 +1,4 @@
-"""Tests for Confluence page/blog commands: wiki write, markdown read."""
+"""Tests for Confluence page/blog commands: markdown/wiki write, markdown read."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from atlassian_cli.app import app
-from atlassian_cli.output import html_to_markdown
+from atlassian_cli.output import html_to_markdown, markdown_to_html
 
 runner = CliRunner()
 
@@ -69,6 +69,44 @@ class TestHtmlToMarkdown:
         assert "PageTitle" not in result
 
 
+# ── markdown_to_html tests ─────────────────────────────────────────────
+
+
+class TestMarkdownToHtml:
+    def test_heading(self):
+        result = markdown_to_html("# Title")
+        assert "<h1>" in result
+        assert "Title" in result
+
+    def test_bold_italic(self):
+        result = markdown_to_html("**bold** and *italic*")
+        assert "<strong>bold</strong>" in result
+        assert "<em>italic</em>" in result
+
+    def test_unordered_list(self):
+        result = markdown_to_html("- one\n- two")
+        assert "<li>" in result
+        assert "one" in result
+
+    def test_fenced_code_block(self):
+        result = markdown_to_html("```python\nprint('hello')\n```")
+        assert "<pre>" in result
+        assert "print" in result
+
+    def test_table(self):
+        md = "| A | B |\n|---|---|\n| 1 | 2 |"
+        result = markdown_to_html(md)
+        assert "<table>" in result
+        assert "<th>" in result
+
+    def test_link(self):
+        result = markdown_to_html("[Click](https://example.com)")
+        assert '<a href="https://example.com">' in result
+
+    def test_empty_string(self):
+        assert markdown_to_html("") == ""
+
+
 # ── Page view (markdown default) ────────────────────────────────────────
 
 
@@ -125,10 +163,30 @@ class TestPageViewMarkdown:
         assert "<h1>" in result.output
 
 
-# ── Page create (wiki via v1, others via v2) ────────────────────────────
+# ── Page create ──────────────────────────────────────────────────────────
 
 
 class TestPageCreate:
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_post")
+    def test_default_markdown_converts_to_html(self, mock_v2_post, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v2_post.return_value = {"id": "999"}
+
+        result = runner.invoke(app, [
+            "confluence", "page", "create",
+            "--space", "100", "--title", "MD Page",
+            "--body", "# Hello\n\n**bold** text",
+        ])
+        assert result.exit_code == 0
+        assert "999" in result.output
+
+        # Verify v2 API was called with converted HTML as storage
+        payload = mock_v2_post.call_args[1]["json"]
+        assert payload["body"]["representation"] == "storage"
+        assert "<h1>" in payload["body"]["value"]
+        assert "<strong>bold</strong>" in payload["body"]["value"]
+
     @patch("atlassian_cli.commands.confluence.page.get_client")
     @patch("atlassian_cli.commands.confluence.page.confluence_v1_post")
     def test_wiki_uses_v1_api(self, mock_v1_post, mock_client, saved_config):
@@ -139,11 +197,10 @@ class TestPageCreate:
             "confluence", "page", "create",
             "--space", "100", "--title", "Wiki Page",
             "--body", "h1. Hello",
+            "--format", "wiki",
         ])
         assert result.exit_code == 0
-        assert "999" in result.output
 
-        # Verify v1 API was called with wiki body structure
         payload = mock_v1_post.call_args[1]["json"]
         assert payload["type"] == "page"
         assert payload["body"]["wiki"]["representation"] == "wiki"
@@ -163,10 +220,24 @@ class TestPageCreate:
         ])
         assert result.exit_code == 0
 
-        # Verify v2 API was called
         payload = mock_v2_post.call_args[1]["json"]
         assert payload["body"]["representation"] == "storage"
         assert payload["body"]["value"] == "<h1>Hello</h1>"
+
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_post")
+    def test_markdown_sets_parent(self, mock_v2_post, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v2_post.return_value = {"id": "999"}
+
+        runner.invoke(app, [
+            "confluence", "page", "create",
+            "--space", "100", "--title", "Child",
+            "--body", "text", "--parent", "50",
+        ])
+
+        payload = mock_v2_post.call_args[1]["json"]
+        assert payload["parentId"] == "50"
 
     @patch("atlassian_cli.commands.confluence.page.get_client")
     @patch("atlassian_cli.commands.confluence.page.confluence_v1_post")
@@ -178,16 +249,35 @@ class TestPageCreate:
             "confluence", "page", "create",
             "--space", "100", "--title", "Child",
             "--body", "text", "--parent", "50",
+            "--format", "wiki",
         ])
 
         payload = mock_v1_post.call_args[1]["json"]
         assert payload["ancestors"] == [{"id": "50"}]
 
 
-# ── Page edit (wiki via v1, others via v2) ──────────────────────────────
+# ── Page edit ────────────────────────────────────────────────────────────
 
 
 class TestPageEdit:
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_get")
+    @patch("atlassian_cli.commands.confluence.page.confluence_put")
+    def test_default_markdown_edit(self, mock_v2_put, mock_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_get.return_value = {"title": "Old Title", "version": {"number": 3}}
+
+        result = runner.invoke(app, [
+            "confluence", "page", "edit", "12345",
+            "--body", "# Updated",
+        ])
+        assert result.exit_code == 0
+
+        payload = mock_v2_put.call_args[1]["json"]
+        assert payload["body"]["representation"] == "storage"
+        assert "<h1>" in payload["body"]["value"]
+        assert payload["version"]["number"] == 4
+
     @patch("atlassian_cli.commands.confluence.page.get_client")
     @patch("atlassian_cli.commands.confluence.page.confluence_get")
     @patch("atlassian_cli.commands.confluence.page.confluence_v1_put")
@@ -198,6 +288,7 @@ class TestPageEdit:
         result = runner.invoke(app, [
             "confluence", "page", "edit", "12345",
             "--body", "h1. Updated",
+            "--format", "wiki",
         ])
         assert result.exit_code == 0
 
@@ -256,10 +347,28 @@ class TestBlogViewMarkdown:
         assert "<h2>" not in result.output
 
 
-# ── Blog create (wiki via v1) ───────────────────────────────────────────
+# ── Blog create ──────────────────────────────────────────────────────────
 
 
 class TestBlogCreate:
+    @patch("atlassian_cli.commands.confluence.blog.get_client")
+    @patch("atlassian_cli.commands.confluence.blog.confluence_post")
+    def test_default_markdown_converts_to_html(self, mock_v2_post, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v2_post.return_value = {"id": "777"}
+
+        result = runner.invoke(app, [
+            "confluence", "blog", "create",
+            "--space", "100", "--title", "MD Blog",
+            "--body", "# Post\n\n**bold** text",
+        ])
+        assert result.exit_code == 0
+        assert "777" in result.output
+
+        payload = mock_v2_post.call_args[1]["json"]
+        assert payload["body"]["representation"] == "storage"
+        assert "<h1>" in payload["body"]["value"]
+
     @patch("atlassian_cli.commands.confluence.blog.get_client")
     @patch("atlassian_cli.commands.confluence.blog.confluence_v1_post")
     def test_wiki_uses_v1_api(self, mock_v1_post, mock_client, saved_config):
@@ -270,9 +379,9 @@ class TestBlogCreate:
             "confluence", "blog", "create",
             "--space", "100", "--title", "Wiki Blog",
             "--body", "h1. Blog Post",
+            "--format", "wiki",
         ])
         assert result.exit_code == 0
-        assert "777" in result.output
 
         payload = mock_v1_post.call_args[1]["json"]
         assert payload["type"] == "blogpost"

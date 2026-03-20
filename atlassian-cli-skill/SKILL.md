@@ -218,28 +218,17 @@ See [advanced-jql-reference.md](references/advanced-jql-reference.md) for date f
 atlassian-cli confluence page view <PAGE-ID>                        # returns Markdown (default)
 atlassian-cli confluence page view <PAGE-ID> --output json          # Markdown + JSON output
 atlassian-cli confluence page view <PAGE-ID> --body-format storage  # raw XHTML (only if needed)
-atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
-atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.wiki
-atlassian-cli confluence page edit <PAGE-ID> --title "New Title" --body "h1. Updated\n\nNew content."
+atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "# Title\n\nContent here."
+atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.md
+atlassian-cli confluence page edit <PAGE-ID> --title "New Title" --body "# Updated\n\nNew content."
 atlassian-cli confluence page search --cql "space = 'ENG' AND title = 'Design Doc'" --limit 10
 ```
 
-**Body format for writing (`--format`):** `wiki` (default), `storage` (XHTML), `atlas_doc_format` (ADF JSON). Wiki is compact and preferred for LLM-generated content.
+**Body format for writing (`--format`):** `markdown` (default — converts to HTML, sent as storage), `wiki` (Confluence wiki markup via v1 API), `storage` (raw XHTML), `atlas_doc_format` (ADF JSON).
 
 **Body format for reading (`--body-format`):** `markdown` (default — fetches rendered HTML and converts to clean Markdown), `storage` (raw XHTML), `view` (rendered HTML), `atlas_doc_format` (ADF JSON — very verbose, avoid).
 
-**Wiki markup quick reference:**
-```
-h1. Heading 1    h2. Heading 2
-*bold*   _italic_   +underline+   -strikethrough-
-[link text|https://example.com]
-* bullet item    # numbered item
-||Col1||Col2||   |cell1|cell2|
-{code:language=python}
-code here
-{code}
-{note}important{note}   {warning}dangerous{warning}   {tip}helpful{tip}
-```
+Both reads and writes default to markdown — LLMs can use standard markdown syntax without learning wiki markup.
 
 ### Space
 
@@ -258,11 +247,11 @@ atlassian-cli confluence space create --key NEWSPACE --name "Space Name" --descr
 atlassian-cli confluence blog list --space <SPACE-ID> --title "Release" --limit 10
 atlassian-cli confluence blog view <BLOG-ID>                            # returns Markdown (default)
 atlassian-cli confluence blog view <BLOG-ID> --output json              # Markdown + JSON output
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Draft" --status draft --body-file post.wiki
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Title" --body "# Title\n\nContent here."
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Draft" --status draft --body-file post.md
 ```
 
-`--status`: `current` (published), `draft`. `--format`: `wiki` (default), `storage`, `atlas_doc_format`.
+`--status`: `current` (published), `draft`. `--format`: `markdown` (default), `wiki`, `storage`, `atlas_doc_format`.
 
 ---
 
@@ -383,7 +372,7 @@ atlassian-cli jira issue comment add PROJ-123 --body "Reassigned to new-owner fo
 atlassian-cli jira issue search --jql "project = PROJ AND fixVersion = 'v2.5' AND status = Done" --output json > shipped.json
 
 # Create a blog post in wiki format (default)
-atlassian-cli confluence blog create --space <SPACE-ID> --title "Release Notes — v2.5" --body-file release-notes.wiki
+atlassian-cli confluence blog create --space <SPACE-ID> --title "Release Notes — v2.5" --body-file release-notes.md
 ```
 
 ---

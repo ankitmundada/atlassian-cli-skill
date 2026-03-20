@@ -14,7 +14,7 @@ from atlassian_cli.client import (
     confluence_post,
     confluence_v1_post,
 )
-from atlassian_cli.output import render, render_single, render_message, html_to_markdown
+from atlassian_cli.output import render, render_single, render_message, html_to_markdown, markdown_to_html
 
 app = typer.Typer(help="Blog post commands.")
 
@@ -79,7 +79,7 @@ def view_blog(
         "Status": post.get("status", ""),
         "Space ID": str(post.get("spaceId", "")),
         "Created": post.get("createdAt", ""),
-        "Body": body_content[:500] if body_content else "(empty)",
+        "Body": body_content if body_content else "(empty)",
     }
     render_single(detail, output=output)
 
@@ -90,7 +90,7 @@ def create_blog(
     title: str = typer.Option(..., "--title", "-t", help="Blog post title"),
     body: Optional[str] = typer.Option(None, "--body", "-b", help="Blog post body content"),
     body_file: Optional[Path] = typer.Option(None, "--body-file", help="Read body from file"),
-    format: str = typer.Option("wiki", "--format", "-f", help="Body format: wiki (default), storage, or atlas_doc_format"),
+    format: str = typer.Option("markdown", "--format", "-f", help="Body format: markdown (default), wiki, storage, or atlas_doc_format"),
     status: str = typer.Option("current", "--status", help="current or draft"),
     output: str = typer.Option("table", "--output", "-o"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
@@ -101,9 +101,22 @@ def create_blog(
     if body_file:
         content = body_file.read_text()
 
-    if format == "wiki":
-        # v1 API properly converts wiki markup to storage format
+    if format == "markdown":
+        # Convert markdown to HTML and send as storage format via v2 API
+        html_content = markdown_to_html(content)
         payload: dict = {
+            "spaceId": space_id,
+            "title": title,
+            "status": status,
+            "body": {
+                "representation": "storage",
+                "value": html_content,
+            },
+        }
+        result = confluence_post(client, "blogposts", json=payload)
+    elif format == "wiki":
+        # v1 API properly converts wiki markup to storage format
+        payload = {
             "type": "blogpost",
             "title": title,
             "space": {"id": space_id},

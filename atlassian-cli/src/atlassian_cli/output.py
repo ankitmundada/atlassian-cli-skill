@@ -54,7 +54,7 @@ def render_single(data: dict[str, Any], *, output: str = "table") -> None:
     table.add_column("Field", style="cyan", no_wrap=True)
     table.add_column("Value")
     for key, value in data.items():
-        table.add_row(key, _truncate(str(value), 120))
+        table.add_row(key, str(value))
     console.print(table)
 
 
@@ -100,6 +100,12 @@ def html_to_markdown(html: str) -> str:
     """Convert HTML to Markdown using markdownify."""
     from markdownify import markdownify
     return markdownify(html, heading_style="ATX").strip()
+
+
+def markdown_to_html(md: str) -> str:
+    """Convert Markdown to HTML for Confluence storage format."""
+    import markdown as md_lib
+    return md_lib.markdown(md, extensions=["tables", "fenced_code"])
 
 
 def _truncate(s: str, max_len: int) -> str:

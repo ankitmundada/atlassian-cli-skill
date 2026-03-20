@@ -17,7 +17,7 @@ from atlassian_cli.client import (
     confluence_v1_put,
     confluence_search,
 )
-from atlassian_cli.output import render, render_single, render_message, html_to_markdown
+from atlassian_cli.output import render, render_single, render_message, html_to_markdown, markdown_to_html
 
 app = typer.Typer(help="Page commands.")
 
@@ -52,7 +52,7 @@ def view_page(
         "Status": page.get("status", ""),
         "Space ID": (page.get("spaceId") or ""),
         "Version": str((page.get("version") or {}).get("number", "")),
-        "Body": body_content[:500] if body_content else "(empty)",
+        "Body": body_content if body_content else "(empty)",
     }
     render_single(detail, output=output)
 
@@ -64,7 +64,7 @@ def create_page(
     body: Optional[str] = typer.Option(None, "--body", "-b", help="Page body content"),
     body_file: Optional[Path] = typer.Option(None, "--body-file", help="Read body from file"),
     parent_id: Optional[str] = typer.Option(None, "--parent", help="Parent page ID"),
-    format: str = typer.Option("wiki", "--format", "-f", help="Body format: wiki (default), storage, or atlas_doc_format"),
+    format: str = typer.Option("markdown", "--format", "-f", help="Body format: markdown (default), wiki, storage, or atlas_doc_format"),
     status: str = typer.Option("current", "--status", help="current or draft"),
     output: str = typer.Option("table", "--output", "-o"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
@@ -75,9 +75,24 @@ def create_page(
     if body_file:
         content = body_file.read_text()
 
-    if format == "wiki":
-        # v1 API properly converts wiki markup to storage format
+    if format == "markdown":
+        # Convert markdown to HTML and send as storage format via v2 API
+        html_content = markdown_to_html(content)
         payload: dict = {
+            "spaceId": space_id,
+            "title": title,
+            "status": status,
+            "body": {
+                "representation": "storage",
+                "value": html_content,
+            },
+        }
+        if parent_id:
+            payload["parentId"] = parent_id
+        result = confluence_post(client, "pages", json=payload)
+    elif format == "wiki":
+        # v1 API properly converts wiki markup to storage format
+        payload = {
             "type": "page",
             "title": title,
             "space": {"id": space_id},
@@ -115,7 +130,7 @@ def edit_page(
     title: Optional[str] = typer.Option(None, "--title", "-t"),
     body: Optional[str] = typer.Option(None, "--body", "-b"),
     body_file: Optional[Path] = typer.Option(None, "--body-file"),
-    format: str = typer.Option("wiki", "--format", "-f", help="Body format: wiki (default), storage, or atlas_doc_format"),
+    format: str = typer.Option("markdown", "--format", "-f", help="Body format: markdown (default), wiki, storage, or atlas_doc_format"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
 ) -> None:
     """Edit an existing Confluence page."""
@@ -130,9 +145,23 @@ def edit_page(
     if body_file:
         content = body_file.read_text()
 
-    if format == "wiki":
-        # v1 API properly converts wiki markup to storage format
+    if format == "markdown":
+        # Convert markdown to HTML and send as storage format via v2 API
         payload: dict = {
+            "id": id,
+            "status": "current",
+            "version": {"number": version + 1},
+            "title": title or current_title,
+        }
+        if content is not None:
+            payload["body"] = {
+                "representation": "storage",
+                "value": markdown_to_html(content),
+            }
+        confluence_put(client, f"pages/{id}", json=payload)
+    elif format == "wiki":
+        # v1 API properly converts wiki markup to storage format
+        payload = {
             "type": "page",
             "title": title or current_title,
             "version": {"number": version + 1},
