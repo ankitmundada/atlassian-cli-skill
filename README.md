@@ -4,12 +4,11 @@ Skills and tools for AI coding agents (Claude Code, Cursor, etc.) to work with A
 
 ## What's here
 
-| Component                                   | Description                                                                                                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [atlassian-cli](atlassian-cli/)             | Open-source Python CLI for Jira and Confluence Cloud. Drop-in replacement for Atlassian's proprietary `acli`.                                         |
-| [atlassian-cli-skill](atlassian-cli-skill/) | Agent skill that teaches AI agents how to use `atlassian-cli` for project management — JQL, decision patterns, workflows, Jira+Confluence philosophy. |
-
-The CLI tool and the skill are designed to work together. The skill provides the knowledge; the CLI provides the tool.
+| Component                                   | Description                                                                                                       |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [atlassian-cli](atlassian-cli/)             | Open-source Python CLI for Jira and Confluence Cloud. Drop-in replacement for Atlassian's proprietary `acli`.     |
+| [atlassian-cli-skill](atlassian-cli-skill/) | Agent skill for Jira and Confluence — JQL, decision patterns, workflows, reading/writing Confluence pages.         |
+| [smart-commits](smart-commits/)             | Agent skill that links git commits, branches, and PRs to Jira issues automatically via Jira smart commits.        |
 
 ## Quick start
 
