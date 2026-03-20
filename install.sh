@@ -17,20 +17,13 @@ TARGET="$HOME/.claude/skills/atlassian-cli"
 # ── CLI ──────────────────────────────────────────────────────────────────
 
 install_cli() {
-  if command -v pipx &>/dev/null; then
-    echo "Installing cli-atlassian via pipx..."
-    pipx upgrade cli-atlassian 2>/dev/null || pipx install cli-atlassian
-  elif command -v pip3 &>/dev/null; then
-    echo "Installing cli-atlassian via pip3..."
-    pip3 install --upgrade cli-atlassian
-  elif command -v pip &>/dev/null; then
-    echo "Installing cli-atlassian via pip..."
-    pip install --upgrade cli-atlassian
-  else
-    echo "Error: need pipx or pip to install the CLI." >&2
+  if ! command -v pipx &>/dev/null; then
+    echo "Error: pipx is required to install atlassian-cli." >&2
     echo "Install pipx: https://pipx.pypa.io/stable/installation/" >&2
     exit 1
   fi
+  echo "Installing cli-atlassian via pipx..."
+  pipx upgrade cli-atlassian 2>/dev/null || pipx install cli-atlassian
 }
 
 # ── Skill ────────────────────────────────────────────────────────────────
