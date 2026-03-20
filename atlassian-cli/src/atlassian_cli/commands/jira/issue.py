@@ -54,6 +54,16 @@ def _extract_issue_detail(issue: dict) -> dict:
     }
 
 
+DEV_LABELS = {
+    "repository": "commits",
+    "branch": "branches",
+    "pullrequest": "pull requests",
+    "build": "builds",
+    "review": "reviews",
+    "deployment-environment": "deployments",
+}
+
+
 def _get_dev_summary(client, issue_id: str) -> dict:
     """Fetch dev-status summary for an issue. Returns empty dict on failure."""
     try:
@@ -61,9 +71,11 @@ def _get_dev_summary(client, issue_id: str) -> dict:
         summary = data.get("summary", {})
         result = {}
         for category, info in summary.items():
-            count = info.get("count", 0) if isinstance(info, dict) else 0
+            overall = info.get("overall", {}) if isinstance(info, dict) else {}
+            count = overall.get("count", 0)
             if count > 0:
-                result[category] = count
+                label = DEV_LABELS.get(category, category)
+                result[label] = count
         return result
     except Exception:
         return {}

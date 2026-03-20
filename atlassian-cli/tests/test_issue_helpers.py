@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock
 
 import pytest
@@ -130,30 +131,36 @@ class TestTextToAdf:
 
 
 class TestGetDevSummary:
-    def test_parses_summary(self):
+    def _mock_dev_response(self, summary_data):
         mock_client = MagicMock()
+        body = {"summary": summary_data}
         mock_client.request.return_value = MagicMock(
             status_code=200,
             is_error=False,
-            content=b'{"summary": {"branch": {"count": 1}, "commit": {"count": 5}, "pullrequest": {"count": 2}}}',
-            json=lambda: {"summary": {"branch": {"count": 1}, "commit": {"count": 5}, "pullrequest": {"count": 2}}},
+            content=json.dumps(body).encode(),
+            json=lambda: body,
         )
+        return mock_client
+
+    def test_parses_summary(self):
+        mock_client = self._mock_dev_response({
+            "branch": {"overall": {"count": 1}},
+            "repository": {"overall": {"count": 5}},
+            "pullrequest": {"overall": {"count": 2}},
+        })
         result = _get_dev_summary(mock_client, "10001")
-        assert result["branch"] == 1
-        assert result["commit"] == 5
-        assert result["pullrequest"] == 2
+        assert result["branches"] == 1
+        assert result["commits"] == 5
+        assert result["pull requests"] == 2
 
     def test_skips_zero_counts(self):
-        mock_client = MagicMock()
-        mock_client.request.return_value = MagicMock(
-            status_code=200,
-            is_error=False,
-            content=b'{"summary": {"branch": {"count": 0}, "commit": {"count": 3}}}',
-            json=lambda: {"summary": {"branch": {"count": 0}, "commit": {"count": 3}}},
-        )
+        mock_client = self._mock_dev_response({
+            "branch": {"overall": {"count": 0}},
+            "repository": {"overall": {"count": 3}},
+        })
         result = _get_dev_summary(mock_client, "10001")
-        assert "branch" not in result
-        assert result["commit"] == 3
+        assert "branches" not in result
+        assert result["commits"] == 3
 
     def test_returns_empty_on_failure(self):
         mock_client = MagicMock()
@@ -162,12 +169,6 @@ class TestGetDevSummary:
         assert result == {}
 
     def test_returns_empty_on_missing_summary(self):
-        mock_client = MagicMock()
-        mock_client.request.return_value = MagicMock(
-            status_code=200,
-            is_error=False,
-            content=b'{}',
-            json=lambda: {},
-        )
+        mock_client = self._mock_dev_response({})
         result = _get_dev_summary(mock_client, "10001")
         assert result == {}
