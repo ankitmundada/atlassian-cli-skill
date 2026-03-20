@@ -256,7 +256,8 @@ atlassian-cli confluence space create --key NEWSPACE --name "Space Name" --descr
 
 ```bash
 atlassian-cli confluence blog list --space <SPACE-ID> --title "Release" --limit 10
-atlassian-cli confluence blog view <BLOG-ID> --output json
+atlassian-cli confluence blog view <BLOG-ID>                            # returns Markdown (default)
+atlassian-cli confluence blog view <BLOG-ID> --output json              # Markdown + JSON output
 atlassian-cli confluence blog create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
 atlassian-cli confluence blog create --space <SPACE-ID> --title "Draft" --status draft --body-file post.wiki
 ```
