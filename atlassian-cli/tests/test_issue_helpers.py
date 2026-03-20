@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from atlassian_cli.commands.jira.issue import (
@@ -9,6 +11,7 @@ from atlassian_cli.commands.jira.issue import (
     _extract_issue_detail,
     _adf_to_text,
     _text_to_adf,
+    _get_dev_summary,
 )
 from conftest import SAMPLE_ISSUE
 
@@ -124,3 +127,47 @@ class TestTextToAdf:
         assert len(adf["content"]) == 1
         # Empty string produces a paragraph with empty content (same as blank line)
         assert adf["content"][0]["content"] == []
+
+
+class TestGetDevSummary:
+    def test_parses_summary(self):
+        mock_client = MagicMock()
+        mock_client.request.return_value = MagicMock(
+            status_code=200,
+            is_error=False,
+            content=b'{"summary": {"branch": {"count": 1}, "commit": {"count": 5}, "pullrequest": {"count": 2}}}',
+            json=lambda: {"summary": {"branch": {"count": 1}, "commit": {"count": 5}, "pullrequest": {"count": 2}}},
+        )
+        result = _get_dev_summary(mock_client, "10001")
+        assert result["branch"] == 1
+        assert result["commit"] == 5
+        assert result["pullrequest"] == 2
+
+    def test_skips_zero_counts(self):
+        mock_client = MagicMock()
+        mock_client.request.return_value = MagicMock(
+            status_code=200,
+            is_error=False,
+            content=b'{"summary": {"branch": {"count": 0}, "commit": {"count": 3}}}',
+            json=lambda: {"summary": {"branch": {"count": 0}, "commit": {"count": 3}}},
+        )
+        result = _get_dev_summary(mock_client, "10001")
+        assert "branch" not in result
+        assert result["commit"] == 3
+
+    def test_returns_empty_on_failure(self):
+        mock_client = MagicMock()
+        mock_client.request.side_effect = Exception("connection refused")
+        result = _get_dev_summary(mock_client, "10001")
+        assert result == {}
+
+    def test_returns_empty_on_missing_summary(self):
+        mock_client = MagicMock()
+        mock_client.request.return_value = MagicMock(
+            status_code=200,
+            is_error=False,
+            content=b'{}',
+            json=lambda: {},
+        )
+        result = _get_dev_summary(mock_client, "10001")
+        assert result == {}

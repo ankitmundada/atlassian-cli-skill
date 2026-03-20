@@ -105,6 +105,13 @@ def confluence_search(client: httpx.Client, **params: Any) -> Any:
     return _request(client, "GET", "/wiki/rest/api/search", params=params)
 
 
+# ── Jira Dev Status (internal API) ────────────────────────────────────────
+
+
+def dev_status_get(client: httpx.Client, path: str, **params: Any) -> Any:
+    return _request(client, "GET", f"/rest/dev-status/latest/{path}", params=params)
+
+
 # ── Internal ─────────────────────────────────────────────────────────────
 
 

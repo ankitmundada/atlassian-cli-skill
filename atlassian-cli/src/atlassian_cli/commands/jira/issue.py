@@ -9,7 +9,7 @@ from typing import Optional
 
 import typer
 
-from atlassian_cli.client import get_client, jira_get, jira_post, jira_put, jira_delete
+from atlassian_cli.client import get_client, jira_get, jira_post, jira_put, jira_delete, dev_status_get
 from atlassian_cli.output import render, render_single, render_message
 
 app = typer.Typer(help="Issue commands.")
@@ -52,6 +52,21 @@ def _extract_issue_detail(issue: dict) -> dict:
         "Updated": f.get("updated", ""),
         "Description": desc or "",
     }
+
+
+def _get_dev_summary(client, issue_id: str) -> dict:
+    """Fetch dev-status summary for an issue. Returns empty dict on failure."""
+    try:
+        data = dev_status_get(client, "issue/summary", issueId=issue_id)
+        summary = data.get("summary", {})
+        result = {}
+        for category, info in summary.items():
+            count = info.get("count", 0) if isinstance(info, dict) else 0
+            if count > 0:
+                result[category] = count
+        return result
+    except Exception:
+        return {}
 
 
 def _adf_to_text(adf: dict) -> str:
@@ -108,9 +123,18 @@ def view(
         params["fields"] = fields
     issue = jira_get(client, f"issue/{key}", **params)
     if output == "json":
+        # Append dev info to JSON output
+        dev = _get_dev_summary(client, issue.get("id", ""))
+        if dev:
+            issue["devSummary"] = dev
         print(json.dumps(issue, indent=2))
     else:
-        render_single(_extract_issue_detail(issue), output=output)
+        detail = _extract_issue_detail(issue)
+        dev = _get_dev_summary(client, issue.get("id", ""))
+        if dev:
+            parts = [f"{k}: {v}" for k, v in dev.items()]
+            detail["Development"] = ", ".join(parts)
+        render_single(detail, output=output)
 
 
 @app.command()

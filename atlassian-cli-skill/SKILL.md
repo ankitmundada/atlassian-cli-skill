@@ -1,6 +1,6 @@
 ---
 name: atlassian-cli
-version: 0.3.1
+version: 0.3.2
 description: "Interact with Jira and Confluence using the open-source atlassian-cli tool. Use this skill whenever the user asks you to interact with Jira or Confluence — creating issues, searching with JQL, transitioning tickets, managing sprints, triaging bugs, generating reports, bulk-creating issues from notes, writing or reading Confluence pages, spaces, and blog posts. Also trigger when the user mentions Jira project keys (like PROJ-123), asks about sprint status, backlogs, epics, or references atlassian-cli. Even if the user just says 'check my tickets', 'what's in my backlog', 'create a task for X', or 'write up a doc for this', use this skill."
 ---
 
