@@ -155,26 +155,26 @@ project = "PROJ" AND sprint in closedSprints() AND resolution = Unresolved
 
 ---
 
-## 8. Using JQL with acli
+## 8. Using JQL with atlassian-cli
 
 ```bash
 # Basic search
-acli jira workitem search --jql "project = PROJ AND type = Bug AND created >= -7d" --limit 10
+atlassian-cli jira issue search --jql "project = PROJ AND type = Bug AND created >= -7d" --limit 10
 
 # Count only
-acli jira workitem search --jql "project = PROJ AND sprint in openSprints()" --count
+atlassian-cli jira issue search --jql "project = PROJ AND sprint in openSprints()" --count
 
 # Select specific fields
-acli jira workitem search --jql "assignee = currentUser() AND status != Done" --fields "key,summary,status,priority"
+atlassian-cli jira issue search --jql "assignee = currentUser() AND status != Done" --fields "key,summary,status,priority"
 
 # JSON output for structured processing
-acli jira workitem search --jql "project = PROJ AND fixVersion = 'v2.5'" --json --limit 50
+atlassian-cli jira issue search --jql "project = PROJ AND fixVersion = 'v2.5'" --output json --limit 50
 
 # CSV export
-acli jira workitem search --jql "project = PROJ" --csv --paginate
+atlassian-cli jira issue search --jql "project = PROJ" --output csv --limit 50
 
-# Filter sprint work items via sprint command (supports JQL filter)
-acli jira sprint list-workitems --sprint <ID> --board <ID> --jql "assignee = currentUser()"
+# Filter sprint issues via sprint command (supports JQL filter)
+atlassian-cli jira sprint issues <SPRINT-ID> --jql "assignee = currentUser()" --limit 20
 ```
 
 ---

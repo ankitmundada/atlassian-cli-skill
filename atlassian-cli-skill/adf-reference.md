@@ -2,9 +2,9 @@
 
 Jira Cloud uses ADF (JSON) for rich text. Plain `\n` newlines do **not** create paragraph breaks.
 
-## acli Limitations
+## atlassian-cli Limitations
 
-Rejected or stripped by acli: headings, bold/italic/code text marks, code block syntax highlighting.
+Rejected or stripped by atlassian-cli: headings, bold/italic/code text marks, code block syntax highlighting.
 
 Supported: paragraphs, bullet lists, ordered lists, code blocks (no language highlighting).
 
@@ -29,9 +29,8 @@ Supported: paragraphs, bullet lists, ordered lists, code blocks (no language hig
 
 ```bash
 # Inline ADF
-acli jira workitem comment create --key <KEY> --body '{"version":1,"type":"doc","content":[...]}'
+atlassian-cli jira issue comment add <KEY> --body '{"version":1,"type":"doc","content":[...]}'
 
 # From file
-acli jira workitem comment create --key <KEY> --body-file comment.json
-acli jira workitem edit --key <KEY> --description-file desc.json
+atlassian-cli jira issue comment add <KEY> --body-file comment.json
 ```
