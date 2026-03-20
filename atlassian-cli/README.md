@@ -8,9 +8,7 @@ Open-source Python CLI for Jira and Confluence Cloud. Built for humans and AI ag
 # One-liner (CLI + Claude Code skill)
 curl -fsSL https://raw.githubusercontent.com/ankitmundada/atlassian-cli-skill/main/install.sh | bash
 
-# Or just the CLI — pick one
-brew install ankitmundada/tap/atlassian-cli
-pip install cli-atlassian
+# Or just the CLI
 pipx install cli-atlassian
 ```
 
@@ -108,7 +106,7 @@ atlassian-cli auth status
 | ----------------- | ------------------------------- | ---------------------------- |
 | Open source       | Yes (MIT)                       | No                           |
 | Extensible        | Fork it, PR it                  | Can't                        |
-| Install           | `brew install` / `pip install`  | Download binary              |
+| Install           | `pipx install`                  | Download binary              |
 | Command names     | `issue`, `sprint`               | `workitem`, `list-workitems` |
 | Bug fixes         | Community-driven                | Wait for vendor              |
 | AI-agent friendly | Compact output, `--output json` | Same                         |

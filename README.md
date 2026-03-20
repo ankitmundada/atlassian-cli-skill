@@ -22,9 +22,6 @@ curl -fsSL https://raw.githubusercontent.com/ankitmundada/atlassian-cli-skill/ma
 ### Or install separately
 
 ```bash
-# CLI — pick one
-brew install ankitmundada/tap/atlassian-cli
-pip install cli-atlassian
 pipx install cli-atlassian
 ```
 

@@ -1,6 +1,6 @@
 ---
 name: atlassian-cli
-version: 0.3.0
+version: 0.3.1
 description: "Interact with Jira and Confluence using the open-source atlassian-cli tool. Use this skill whenever the user asks you to interact with Jira or Confluence — creating issues, searching with JQL, transitioning tickets, managing sprints, triaging bugs, generating reports, bulk-creating issues from notes, writing or reading Confluence pages, spaces, and blog posts. Also trigger when the user mentions Jira project keys (like PROJ-123), asks about sprint status, backlogs, epics, or references atlassian-cli. Even if the user just says 'check my tickets', 'what's in my backlog', 'create a task for X', or 'write up a doc for this', use this skill."
 ---
 
@@ -8,7 +8,7 @@ description: "Interact with Jira and Confluence using the open-source atlassian-
 
 Use the open-source `atlassian-cli` tool for all Jira and Confluence operations. It talks directly to Atlassian Cloud REST APIs and produces compact, predictable output well suited for AI agent workflows.
 
-**Install:** `pip install cli-atlassian` (or `pipx install cli-atlassian` or `brew install ankitmundada/tap/atlassian-cli`).
+**Install:** `pipx install cli-atlassian` (or `pip install cli-atlassian`).
 
 **Setup:** `atlassian-cli auth login` — prompts for site URL, email, and API token. Create a token at https://id.atlassian.com/manage/api-tokens.
 
