@@ -215,8 +215,9 @@ See [advanced-jql-reference.md](references/advanced-jql-reference.md) for date f
 ### Page
 
 ```bash
-atlassian-cli confluence page view <PAGE-ID>
-atlassian-cli confluence page view <PAGE-ID> --body-format storage --output json
+atlassian-cli confluence page view <PAGE-ID>                        # returns Markdown (default)
+atlassian-cli confluence page view <PAGE-ID> --output json          # Markdown + JSON output
+atlassian-cli confluence page view <PAGE-ID> --body-format storage  # raw XHTML (only if needed)
 atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "h1. Title\n\nContent here."
 atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.wiki
 atlassian-cli confluence page edit <PAGE-ID> --title "New Title" --body "h1. Updated\n\nNew content."
