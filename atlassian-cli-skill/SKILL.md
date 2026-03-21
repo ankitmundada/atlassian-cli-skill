@@ -1,6 +1,6 @@
 ---
 name: atlassian-cli
-version: 0.3.4
+version: 0.3.5
 description: "Interact with Jira and Confluence using the open-source atlassian-cli tool. Use this skill whenever the user asks you to interact with Jira or Confluence — creating issues, searching with JQL, transitioning tickets, managing sprints, triaging bugs, generating reports, bulk-creating issues from notes, writing or reading Confluence pages, spaces, and blog posts. Also trigger when the user mentions Jira project keys (like PROJ-123), asks about sprint status, backlogs, epics, or references atlassian-cli. Even if the user just says 'check my tickets', 'what's in my backlog', 'create a task for X', or 'write up a doc for this', use this skill."
 ---
 
@@ -137,9 +137,12 @@ See [advanced-jql-reference.md](references/advanced-jql-reference.md) for date f
 
 ```bash
 atlassian-cli confluence page view <PAGE-ID>
+atlassian-cli confluence page view <PAGE-ID> --version 3                      # view specific historical version
+atlassian-cli confluence page versions <PAGE-ID>                              # list version history
 atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body "# Heading\n\nContent here."
 atlassian-cli confluence page create --space <SPACE-ID> --title "Title" --body-file page.md
 atlassian-cli confluence page edit <PAGE-ID> --body "# Updated\n\nNew content."
+atlassian-cli confluence page edit <PAGE-ID> --body "## New Section" --append  # append to existing content
 atlassian-cli confluence page search --cql "space = 'ENG' AND title = 'Design Doc'" --limit 10
 ```
 
@@ -175,6 +178,8 @@ atlassian-cli confluence space create --key NEWSPACE --name "Space Name"
 ---
 
 ## Decision Patterns
+
+**Use `--append` when adding to a doc.** When iteratively building up a Confluence page, always use `--append` to add new sections. Use plain `edit` only when replacing the full content.
 
 **Zoom in, don't dump.** Start broad (epics, `--limit 10`), summarize, drill in only if asked. Don't pull every issue.
 

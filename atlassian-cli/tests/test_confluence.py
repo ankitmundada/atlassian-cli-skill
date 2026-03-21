@@ -312,6 +312,144 @@ class TestPageEdit:
         payload = mock_v2_put.call_args[1]["json"]
         assert payload["body"]["representation"] == "storage"
 
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_get")
+    @patch("atlassian_cli.commands.confluence.page.confluence_put")
+    def test_append_combines_content(self, mock_v2_put, mock_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_get.return_value = {
+            "title": "My Doc",
+            "version": {"number": 2},
+            "body": {"storage": {"value": "<h1>Existing</h1>"}},
+        }
+
+        result = runner.invoke(app, [
+            "confluence", "page", "edit", "12345",
+            "--body", "## New Section", "--append",
+        ])
+        assert result.exit_code == 0
+
+        payload = mock_v2_put.call_args[1]["json"]
+        body_value = payload["body"]["value"]
+        # Existing content preserved and new content appended
+        assert "<h1>Existing</h1>" in body_value
+        assert "<h2>" in body_value
+        assert payload["body"]["representation"] == "storage"
+        assert payload["version"]["number"] == 3
+
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_get")
+    @patch("atlassian_cli.commands.confluence.page.confluence_put")
+    def test_append_storage_format(self, mock_v2_put, mock_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_get.return_value = {
+            "title": "My Doc",
+            "version": {"number": 1},
+            "body": {"storage": {"value": "<p>Old</p>"}},
+        }
+
+        result = runner.invoke(app, [
+            "confluence", "page", "edit", "12345",
+            "--body", "<p>New</p>", "--append", "--format", "storage",
+        ])
+        assert result.exit_code == 0
+
+        payload = mock_v2_put.call_args[1]["json"]
+        assert payload["body"]["value"] == "<p>Old</p><p>New</p>"
+
+    def test_append_wiki_errors(self, saved_config):
+        result = runner.invoke(app, [
+            "confluence", "page", "edit", "12345",
+            "--body", "h1. Nope", "--append", "--format", "wiki",
+        ])
+        assert result.exit_code == 1
+
+
+# ── Page view with --version ───────────────────────────────────────────
+
+
+class TestPageViewVersion:
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_v1_get")
+    def test_fetches_specific_version(self, mock_v1_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v1_get.return_value = {
+            "id": "12345",
+            "title": "Test Page",
+            "version": {"number": 2},
+            "body": {"storage": {"value": "<h1>Old content</h1>"}},
+        }
+
+        result = runner.invoke(app, [
+            "confluence", "page", "view", "12345", "--version", "2",
+        ])
+        assert result.exit_code == 0
+
+        # Should use v1 API with version and expand params
+        call_args = mock_v1_get.call_args
+        assert call_args[0][1] == "content/12345"
+        assert call_args[1]["version"] == 2
+        assert "body.storage" in call_args[1]["expand"]
+
+        # Should convert storage HTML to markdown by default
+        assert "# Old content" in result.output
+
+
+# ── Page versions ──────────────────────────────────────────────────────
+
+
+class TestPageVersions:
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_v1_get")
+    def test_lists_versions(self, mock_v1_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v1_get.return_value = {
+            "results": [
+                {
+                    "number": 3,
+                    "by": {"displayName": "Alice"},
+                    "when": "2026-03-21T10:00:00Z",
+                    "message": "Added architecture section",
+                },
+                {
+                    "number": 2,
+                    "by": {"displayName": "Bob"},
+                    "when": "2026-03-20T15:00:00Z",
+                    "message": "",
+                },
+                {
+                    "number": 1,
+                    "by": {"displayName": "Alice"},
+                    "when": "2026-03-19T09:00:00Z",
+                    "message": "",
+                },
+            ],
+        }
+
+        result = runner.invoke(app, [
+            "confluence", "page", "versions", "12345",
+        ])
+        assert result.exit_code == 0
+        assert "Alice" in result.output
+        assert "Bob" in result.output
+        assert "architecture" in result.output
+
+    @patch("atlassian_cli.commands.confluence.page.get_client")
+    @patch("atlassian_cli.commands.confluence.page.confluence_v1_get")
+    def test_respects_limit(self, mock_v1_get, mock_client, saved_config):
+        mock_client.return_value = MagicMock()
+        mock_v1_get.return_value = {
+            "results": [
+                {"number": i, "by": {"displayName": "User"}, "when": "", "message": ""}
+                for i in range(1, 11)
+            ],
+        }
+
+        result = runner.invoke(app, [
+            "confluence", "page", "versions", "12345", "--limit", "3",
+        ])
+        assert result.exit_code == 0
+
 
 # ── Blog view (markdown default) ────────────────────────────────────────
 
