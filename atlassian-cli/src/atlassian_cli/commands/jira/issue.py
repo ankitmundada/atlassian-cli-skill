@@ -81,6 +81,91 @@ def _get_dev_summary(client, issue_id: str) -> dict:
         return {}
 
 
+def _get_dev_detail(client, issue_id: str) -> dict:
+    """Fetch detailed dev info (commits, branches, PRs) for an issue."""
+    result: dict = {"commits": [], "branches": [], "pull_requests": []}
+    try:
+        summary_data = dev_status_get(client, "issue/summary", issueId=issue_id)
+        summary = summary_data.get("summary", {})
+    except Exception:
+        return result
+
+    # Fetch detail for each category that has data
+    detail_types = [
+        ("repository", "commits"),
+        ("branch", "branches"),
+        ("pullrequest", "pull_requests"),
+    ]
+    for data_type, result_key in detail_types:
+        cat = summary.get(data_type, {})
+        overall = cat.get("overall", {})
+        if overall.get("count", 0) == 0:
+            continue
+        # Get instance types (e.g. GitHub, Bitbucket)
+        for instance_name in cat.get("byInstanceType", {}):
+            try:
+                detail = dev_status_get(
+                    client, "issue/detail",
+                    issueId=issue_id,
+                    applicationType=instance_name,
+                    dataType=data_type,
+                )
+                for entry in detail.get("detail", []):
+                    if result_key == "commits":
+                        for repo in entry.get("repositories", []):
+                            for commit in repo.get("commits", []):
+                                result["commits"].append({
+                                    "id": commit.get("displayId", ""),
+                                    "message": commit.get("message", "").split("\n")[0],
+                                    "author": commit.get("author", {}).get("name", ""),
+                                    "url": commit.get("url", ""),
+                                })
+                    elif result_key == "branches":
+                        for repo in entry.get("repositories", []):
+                            for branch in repo.get("branches", []):
+                                result["branches"].append({
+                                    "name": branch.get("name", ""),
+                                    "url": branch.get("url", ""),
+                                })
+                    elif result_key == "pull_requests":
+                        for pr in entry.get("pullRequests", []):
+                            result["pull_requests"].append({
+                                "id": pr.get("id", ""),
+                                "title": pr.get("name", ""),
+                                "state": pr.get("status", ""),
+                                "url": pr.get("url", ""),
+                                "author": pr.get("author", {}).get("name", ""),
+                            })
+            except Exception:
+                continue
+    return result
+
+
+def _format_dev_markdown(key: str, dev: dict) -> str:
+    """Format dev detail dict as markdown."""
+    lines = [f"# Development — {key}", ""]
+    if dev["commits"]:
+        lines.append("## Commits")
+        for c in dev["commits"]:
+            lines.append(f"- `{c['id']}` {c['message']} — {c['author']}")
+        lines.append("")
+    if dev["branches"]:
+        lines.append("## Branches")
+        for b in dev["branches"]:
+            lines.append(f"- `{b['name']}`")
+        lines.append("")
+    if dev["pull_requests"]:
+        lines.append("## Pull Requests")
+        for pr in dev["pull_requests"]:
+            state = f"[{pr['state']}]" if pr["state"] else ""
+            lines.append(f"- {pr['title']} {state} — {pr['author']}")
+        lines.append("")
+    if not dev["commits"] and not dev["branches"] and not dev["pull_requests"]:
+        lines.append("No linked development activity.")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def _adf_to_text(adf: dict) -> str:
     """Recursively extract plain text from ADF JSON."""
     if adf.get("type") == "text":
@@ -125,6 +210,7 @@ def search(
 def view(
     key: str = typer.Argument(help="Issue key (e.g. PROJ-123)"),
     fields: str = typer.Option("*navigable", "--fields", "-f", help="Fields to fetch"),
+    dev: bool = typer.Option(False, "--dev", help="Show linked commits, branches, and PRs"),
     output: str = typer.Option("table", "--output", "-o", help="table, json, or csv"),
     profile: Optional[str] = typer.Option(None, "--profile", "-p"),
 ) -> None:
@@ -134,17 +220,26 @@ def view(
     if fields != "*all":
         params["fields"] = fields
     issue = jira_get(client, f"issue/{key}", **params)
+    issue_id = issue.get("id", "")
+
+    if dev:
+        dev_detail = _get_dev_detail(client, issue_id)
+        if output == "json":
+            print(json.dumps(dev_detail, indent=2))
+        else:
+            print(_format_dev_markdown(key, dev_detail))
+        return
+
     if output == "json":
-        # Append dev info to JSON output
-        dev = _get_dev_summary(client, issue.get("id", ""))
-        if dev:
-            issue["devSummary"] = dev
+        dev_summary = _get_dev_summary(client, issue_id)
+        if dev_summary:
+            issue["devSummary"] = dev_summary
         print(json.dumps(issue, indent=2))
     else:
         detail = _extract_issue_detail(issue)
-        dev = _get_dev_summary(client, issue.get("id", ""))
-        if dev:
-            parts = [f"{k}: {v}" for k, v in dev.items()]
+        dev_summary = _get_dev_summary(client, issue_id)
+        if dev_summary:
+            parts = [f"{k}: {v}" for k, v in dev_summary.items()]
             detail["Development"] = ", ".join(parts)
         render_single(detail, output=output)
 
