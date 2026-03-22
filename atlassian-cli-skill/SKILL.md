@@ -191,6 +191,26 @@ atlassian-cli confluence space create --key NEWSPACE --name "Space Name"
 
 ---
 
+## Writing Tickets
+
+### Issue Types
+
+| Type | When | Content |
+|------|------|---------|
+| **Epic** | Feature/initiative spanning sprints | Goal + scope. No implementation detail |
+| **Story** | User-facing capability | "As a [who], I want [what] so that [why]". AC = user behavior, not internals. Can't phrase it as a user need? It's a Task |
+| **Task** | Engineering work (infra, refactors, tooling, migrations) | Tech, approach, done state. Implementation detail belongs here |
+| **Bug** | Something broken | Steps to reproduce, expected vs actual |
+| **Sub-task** | One-person slice of a Story/Task | Implementation-specific OK — parent provides context |
+
+### Stories vs Tasks
+
+**Stories** describe what the user needs — not how to build it. No technology choices, no component names, no architecture. A Story should survive a framework swap. AC describes what the user observes, not what the code does. Tech suggestions go in a separate "Technical Notes" section if needed.
+
+**Tasks** describe engineering work. Tech choices, libraries, and approach ARE the content. The audience is the engineer.
+
+---
+
 ## Workflow Recipes
 
 ### Daily Stand-up
